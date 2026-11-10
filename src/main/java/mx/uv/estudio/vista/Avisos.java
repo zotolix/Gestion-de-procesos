@@ -20,7 +20,7 @@ public final class Avisos {
         p.add(Ui.subtitulo("Avisos"), "span 2");
         NotificacionDao dao = new NotificacionDao();
         for (Notificacion n : lista) {
-            JLabel l = new JLabel("<html>" + Ui.escapar(n.texto()) + " <font color='#59606C'>· " + Ui.fecha(n.fecha()) + "</font></html>");
+            JLabel l = new JLabel("<html>" + Ui.escapar(n.texto()) + " <font color='" + Ui.HEX_TENUE + "'>· " + Ui.fecha(n.fecha()) + "</font></html>");
             if (n.leida()) {
                 l.setForeground(Ui.TENUE);
             }

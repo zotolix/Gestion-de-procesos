@@ -48,7 +48,7 @@ public class PanelRevision extends Pantalla {
 
     private JPanel tarjeta(Proyecto p) {
         JPanel t = Ui.tarjeta("fillx, gap 8", "[grow,fill][][]");
-        t.add(new JLabel("<html><b>" + Ui.escapar(p.cliente()) + "</b><br><font color='#59606C'>Sesión del "
+        t.add(new JLabel("<html><b>" + Ui.escapar(p.cliente()) + "</b><br><font color='" + Ui.HEX_TENUE + "'>Sesión del "
                 + Ui.fecha(p.fechaSesion()) + " · " + p.numFotos() + " fotos</font></html>"));
         t.add(Accion.boton(this, "Aprobar", true, () -> servicio.aprobar(p, usuario), () -> {
             Ui.info(this, "Proyecto aprobado. Se avisó al editor.");

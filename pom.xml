@@ -10,7 +10,7 @@
   <name>Sistema del estudio fotográfico</name>
 
   <properties>
-    <maven.compiler.release>25</maven.compiler.release>
+    <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <main.class>mx.uv.estudio.App</main.class>
   </properties>
@@ -21,6 +21,12 @@
       <groupId>com.formdev</groupId>
       <artifactId>flatlaf</artifactId>
       <version>3.4.1</version>
+    </dependency>
+    <!-- Fuente Inter para FlatLaf -->
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf-fonts-inter</artifactId>
+      <version>4.0</version>
     </dependency>
     <!-- Acomodo de controles en pocas líneas -->
     <dependency>

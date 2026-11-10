@@ -44,7 +44,8 @@ public class PanelUsuarios extends Pantalla {
 
     private JPanel fila(Usuario u) {
         JPanel f = new JPanel(new MigLayout("insets 4 0, fillx, gap 8", "[grow,fill][][]"));
-        f.add(new JLabel("<html><b>" + Ui.escapar(u.nombre()) + "</b><br><font color='#59606C'>"
+        f.setOpaque(false);
+        f.add(new JLabel("<html><b>" + Ui.escapar(u.nombre()) + "</b><br><font color='" + Ui.HEX_TENUE + "'>"
                 + Ui.escapar(u.correo()) + "</font></html>"));
         Map<String, JCheckBox> chks = casillas(u.roles());
         JPanel roles = new JPanel(new MigLayout("insets 0, gap 6"));

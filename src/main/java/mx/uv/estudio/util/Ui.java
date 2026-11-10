@@ -1,8 +1,12 @@
 package mx.uv.estudio.util;
 
+import com.formdev.flatlaf.fonts.inter.FlatInterFont;
+import com.formdev.flatlaf.ui.FlatLineBorder;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Font;
+import java.awt.Insets;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
@@ -21,11 +25,23 @@ import net.miginfocom.swing.MigLayout;
 /** Estilos y utilidades compartidas por todas las pantallas. */
 public final class Ui {
 
-    public static final Color ACENTO = new Color(0x0F6A73);
-    public static final Color OK = new Color(0x1D7443);
-    public static final Color MAL = new Color(0xB0281F);
-    public static final Color AVISO = new Color(0x7E5300);
-    public static final Color TENUE = new Color(0x59606C);
+    public static final Color FONDO = new Color(0x1A, 0x1A, 0x1A);
+    public static final Color SUPERFICIE = new Color(0x24, 0x24, 0x24);
+    public static final Color BORDE = new Color(0x38, 0x38, 0x38);
+    public static final Color BLANCO = new Color(0xFF, 0xFF, 0xFF);
+    public static final Color OSCURO = new Color(0x1A, 0x1A, 0x1A);
+
+    public static final Color ACENTO = new Color(0xF7, 0xFF, 0x5E);
+    public static final Color OK = new Color(0x4E, 0xDF, 0x88);
+    public static final Color MAL = new Color(0xFF, 0x5C, 0x5C);
+    public static final Color AVISO = new Color(0xF7, 0xFF, 0x5E);
+    public static final Color TENUE = new Color(0xA3, 0xA3, 0xA3);
+
+    public static final String HEX_ACENTO = "#F7FF5E";
+    public static final String HEX_OSCURO = "#1A1A1A";
+    public static final String HEX_BLANCO = "#FFFFFF";
+    public static final String HEX_TENUE = "#A3A3A3";
+    public static final String FONT_FAMILY = FlatInterFont.FAMILY;
 
     private static final Locale MX = Locale.forLanguageTag("es-MX");
     private static final NumberFormat DINERO = NumberFormat.getCurrencyInstance(MX);
@@ -48,13 +64,15 @@ public final class Ui {
 
     public static JLabel titulo(String texto) {
         JLabel l = new JLabel(texto);
-        l.setFont(l.getFont().deriveFont(Font.BOLD, 22f));
+        l.setFont(new Font(FONT_FAMILY, Font.BOLD, 28));
+        l.setForeground(BLANCO);
         return l;
     }
 
     public static JLabel subtitulo(String texto) {
         JLabel l = new JLabel(texto);
-        l.setFont(l.getFont().deriveFont(Font.BOLD, 16f));
+        l.setFont(new Font(FONT_FAMILY, Font.BOLD, 20));
+        l.setForeground(BLANCO);
         return l;
     }
 
@@ -75,8 +93,10 @@ public final class Ui {
     public static JButton primario(String texto) {
         JButton b = new JButton(texto);
         b.setBackground(ACENTO);
-        b.setForeground(Color.WHITE);
+        b.setForeground(OSCURO);
         b.setFont(b.getFont().deriveFont(Font.BOLD));
+        b.setFocusPainted(false);
+        b.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return b;
     }
 
@@ -87,10 +107,12 @@ public final class Ui {
 
     public static JPanel tarjeta(String layoutConstraints, String columnas) {
         JPanel p = new JPanel(new MigLayout(layoutConstraints, columnas));
+        p.setBackground(SUPERFICIE);
         Color borde = UIManager.getColor("Component.borderColor");
+        Color cBorde = (borde != null) ? borde : BORDE;
         p.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(borde == null ? Color.LIGHT_GRAY : borde, 1, true),
-                BorderFactory.createEmptyBorder(12, 14, 12, 14)));
+                new FlatLineBorder(new Insets(1, 1, 1, 1), cBorde, 1f, 16),
+                BorderFactory.createEmptyBorder(14, 16, 14, 16)));
         return p;
     }
 

@@ -52,7 +52,7 @@ public class PanelSubirFotos extends Pantalla {
         Optional<Proyecto> p = servicio.proyectoDe(s);
         String estado = p.isPresent() ? "Pendiente · " + p.get().numFotos() + " fotos ya subidas" : "Sin fotos todavía";
         JPanel t = Ui.tarjeta("fillx, gap 8", "[grow,fill][]");
-        t.add(new JLabel("<html><b>" + Ui.escapar(s.clienteNombre()) + "</b><br><font color='#59606C'>"
+        t.add(new JLabel("<html><b>" + Ui.escapar(s.clienteNombre()) + "</b><br><font color='" + Ui.HEX_TENUE + "'>"
                 + Ui.fecha(s.fecha()) + " · " + s.paquete() + " · " + estado + "</font></html>"));
         JButton subir = Ui.primario(p.isPresent() ? "Agregar fotos" : "Elegir fotos y subir");
         subir.addActionListener(e -> {
