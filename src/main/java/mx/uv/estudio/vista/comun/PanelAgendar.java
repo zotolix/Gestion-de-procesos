@@ -179,7 +179,7 @@ public class PanelAgendar extends Pantalla {
                 for (Sesion s : r.stream().limit(MAX_RESULTADOS).toList()) {
                     resultados.add(new JLabel("<html><b>" + Ui.escapar(s.clienteNombre()) + "</b> · "
                             + Ui.escapar(s.clienteTelefono()) + " · " + Ui.escapar(s.clienteCorreo())
-                            + "<br><font color='#59606C'>" + Ui.fecha(s.fecha()) + " " + Ui.hora(s.hora()) + " · "
+                            + "<br><font color='" + Ui.HEX_TENUE + "'>" + Ui.fecha(s.fecha()) + " " + Ui.hora(s.hora()) + " · "
                             + Ui.escapar(s.paquete()) + " · " + Ui.escapar(s.fotografo()) + " · " + s.estadoPago()
                             + "</font></html>"));
                     JButton usar = new JButton("Usar datos");
@@ -230,7 +230,7 @@ public class PanelAgendar extends Pantalla {
         resumen.removeAll();
         resumen.add(Ui.subtitulo("Resumen"), "span 2");
         if (p != null) {
-            resumen.add(new JLabel("<html>" + Ui.escapar(p.nombre()) + "<br><font color='#59606C'>"
+            resumen.add(new JLabel("<html>" + Ui.escapar(p.nombre()) + "<br><font color='" + Ui.HEX_TENUE + "'>"
                     + Ui.escapar(p.incluye()) + "</font></html>"), "span 2, w 260!");
             resumen.add(Ui.tenue("Duración"), "gaptop 6");
             resumen.add(new JLabel(p.duracionLegible()));

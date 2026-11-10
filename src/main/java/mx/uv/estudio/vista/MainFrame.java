@@ -42,7 +42,7 @@ public class MainFrame extends JFrame {
     private final Usuario usuario;
     private final CardLayout cards = new CardLayout();
     private final JPanel centro = new JPanel(cards);
-    private final JPanel menu = new JPanel(new MigLayout("insets 14 12, wrap 1, gap 4", "[200!,fill]"));
+    private final JPanel menu = new JPanel(new MigLayout("insets 16 14, wrap 1, gap 6", "[250!,fill]"));
     private final ButtonGroup grupo = new ButtonGroup();
     private final Map<String, Pantalla> pantallas = new LinkedHashMap<>();
     private final Map<String, JToggleButton> botones = new LinkedHashMap<>();
@@ -59,6 +59,9 @@ public class MainFrame extends JFrame {
         setSize(1280, 800);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
+        getContentPane().setBackground(Ui.FONDO);
+        menu.setBackground(Ui.FONDO);
+        centro.setBackground(Ui.FONDO);
 
         // Sprint 1 y 2: HU16, HU01, HU04, HU11, HU15 (Sprint 1), HU02, HU05, HU12 (Sprint 2), HU03, HU06, HU07, HU09 (Sprint 3); HU17 a HU20 (administrador)
         if (usuario.tiene("cajero")) {
@@ -91,7 +94,7 @@ public class MainFrame extends JFrame {
 
         add(barraSuperior(), BorderLayout.NORTH);
         JScrollPane spMenu = new JScrollPane(menu);
-        spMenu.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 0, 1, java.awt.Color.LIGHT_GRAY));
+        spMenu.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 0, 1, Ui.BORDE));
         add(spMenu, BorderLayout.WEST);
         add(centro, BorderLayout.CENTER);
         add(pie(), BorderLayout.SOUTH);
@@ -100,8 +103,8 @@ public class MainFrame extends JFrame {
 
     private void seccion(String rol) {
         JLabel l = Ui.tenue(rol.toUpperCase());
-        l.setFont(l.getFont().deriveFont(Font.BOLD, 11f));
-        menu.add(l, menu.getComponentCount() == 0 ? "" : "gaptop 12");
+        l.setFont(l.getFont().deriveFont(Font.BOLD, 14f));
+        menu.add(l, menu.getComponentCount() == 0 ? "" : "gaptop 14");
     }
 
     private void agregar(String clave, String titulo, Pantalla p) {
@@ -113,19 +116,23 @@ public class MainFrame extends JFrame {
         centro.add(sp, clave);
         JToggleButton b = new JToggleButton(titulo);
         b.setHorizontalAlignment(JToggleButton.LEFT);
+        b.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         b.addActionListener(e -> mostrar(clave));
         grupo.add(b);
         botones.put(clave, b);
-        menu.add(b, "h 34!");
+        menu.add(b, "h 42!");
     }
 
     private JPanel barraSuperior() {
-        JPanel barra = new JPanel(new MigLayout("insets 10 18, fillx", "[]push[]12[]"));
+        JPanel barra = new JPanel(new MigLayout("insets 12 20, fillx", "[]push[]16[]"));
+        barra.setBackground(Ui.SUPERFICIE);
         JLabel marca = new JLabel("Sistema del estudio");
-        marca.setFont(marca.getFont().deriveFont(Font.BOLD, 15f));
+        marca.setFont(marca.getFont().deriveFont(Font.BOLD, 19f));
         marca.setForeground(Ui.ACENTO);
         barra.add(marca);
-        barra.add(new JLabel(usuario.nombre() + " · " + usuario.rolesLegibles()));
+        JLabel userLbl = new JLabel(usuario.nombre() + " · " + usuario.rolesLegibles());
+        userLbl.setForeground(Ui.BLANCO);
+        barra.add(userLbl);
         JButton salir = new JButton("Cerrar sesión");
         salir.addActionListener(e -> {
             dispose();
@@ -133,13 +140,17 @@ public class MainFrame extends JFrame {
         });
         barra.add(salir);
         JPanel norte = new JPanel(new BorderLayout());
+        norte.setBackground(Ui.SUPERFICIE);
         norte.add(barra, BorderLayout.CENTER);
-        norte.add(new JSeparator(), BorderLayout.SOUTH);
+        JSeparator sep = new JSeparator();
+        sep.setForeground(Ui.BORDE);
+        norte.add(sep, BorderLayout.SOUTH);
         return norte;
     }
 
     private JPanel pie() {
-        JPanel pie = new JPanel(new MigLayout("insets 6 18, fillx", "[]push[]"));
+        JPanel pie = new JPanel(new MigLayout("insets 8 20, fillx", "[]push[]"));
+        pie.setBackground(Ui.SUPERFICIE);
         pie.add(Ui.tenue("Proyecto escolar · Sprint 1, 2 y 3 + HU17 a HU20"));
         JButton reset = new JButton("Restablecer datos de ejemplo");
         reset.addActionListener(e -> {

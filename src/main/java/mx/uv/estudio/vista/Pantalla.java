@@ -19,7 +19,8 @@ public abstract class Pantalla extends JPanel {
     protected Pantalla(Usuario usuario, MainFrame main) {
         this.usuario = usuario;
         this.main = main;
-        setLayout(new MigLayout("insets 18 22, fillx, wrap 1", "[grow,fill]"));
+        setBackground(Ui.FONDO);
+        setLayout(new MigLayout("insets 20 24, fillx, wrap 1", "[grow,fill]"));
     }
 
     protected abstract void construir() throws SQLException;

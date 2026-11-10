@@ -24,33 +24,36 @@ public class LoginFrame extends JFrame {
     public LoginFrame() {
         super("Sistema del estudio · Iniciar sesión");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLayout(new MigLayout("insets 32, wrap 1, fillx", "[420!]"));
+        getContentPane().setBackground(Ui.FONDO);
+        setLayout(new MigLayout("insets 36, wrap 1, fillx", "[460!]"));
 
         JLabel marca = Ui.tenue("SISTEMA DEL ESTUDIO");
         marca.setForeground(Ui.ACENTO);
+        marca.setFont(marca.getFont().deriveFont(java.awt.Font.BOLD, 14f));
         add(marca);
         add(Ui.titulo("Iniciar sesión"), "gapbottom 6");
         lblError.setForeground(Ui.MAL);
         add(lblError);
         add(new JLabel("Correo"));
-        add(txtCorreo, "growx");
-        add(new JLabel("Contraseña"), "gaptop 6");
-        add(txtPass, "growx");
+        add(txtCorreo, "growx, h 38!");
+        add(new JLabel("Contraseña"), "gaptop 8");
+        add(txtPass, "growx, h 38!");
         JButton btnEntrar = Ui.primario("Entrar");
         btnEntrar.addActionListener(e -> entrar());
-        add(btnEntrar, "growx, gaptop 10, h 40!");
+        add(btnEntrar, "growx, gaptop 12, h 46!");
         getRootPane().setDefaultButton(btnEntrar);
 
-        add(Ui.tenue("Cuentas de ejemplo (contraseña 1234). Haz clic para llenar el correo:"), "gaptop 18");
+        add(Ui.tenue("Cuentas de ejemplo (contraseña 1234). Haz clic para llenar el correo:"), "gaptop 20");
         try {
             for (Usuario u : new UsuarioDao().todos()) {
                 JButton b = new JButton(u.nombre() + " · " + u.rolesLegibles());
                 b.setHorizontalAlignment(JButton.LEFT);
+                b.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
                 b.addActionListener(e -> {
                     txtCorreo.setText(u.correo());
                     txtPass.requestFocusInWindow();
                 });
-                add(b, "growx");
+                add(b, "growx, h 38!");
             }
         } catch (SQLException e) {
             add(Ui.tenue("No se pudieron cargar las cuentas de ejemplo."));

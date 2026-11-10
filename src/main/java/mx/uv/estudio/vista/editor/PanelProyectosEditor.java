@@ -43,7 +43,7 @@ public class PanelProyectosEditor extends Pantalla {
 
     private JPanel tarjeta(Proyecto p) throws SQLException {
         JPanel t = Ui.tarjeta("fillx, wrap 3, gap 8", "[grow,fill][][]");
-        t.add(new JLabel("<html><b>" + Ui.escapar(p.cliente()) + "</b><br><font color='#59606C'>Sesión del "
+        t.add(new JLabel("<html><b>" + Ui.escapar(p.cliente()) + "</b><br><font color='" + Ui.HEX_TENUE + "'>Sesión del "
                 + Ui.fecha(p.fechaSesion()) + " · " + p.numFotos() + " fotos</font></html>"));
         t.add(Ui.chip(p.estado() + (p.aprobado() ? " · aprobado" : ""), color(p)));
 
@@ -55,7 +55,7 @@ public class PanelProyectosEditor extends Pantalla {
             t.add(new JLabel(), "w 10!");
         }
         if (p.comentario() != null && !p.comentario().isBlank()) {
-            t.add(new JLabel("<html><font color='#7E5300'>Comentario del administrador: " + Ui.escapar(p.comentario())
+            t.add(new JLabel("<html><font color='" + Ui.HEX_ACENTO + "'>Comentario del administrador: " + Ui.escapar(p.comentario())
                     + "</font></html>"), "span 3");
         }
         if ("Revisión".equals(p.estado()) && !p.aprobado()) {

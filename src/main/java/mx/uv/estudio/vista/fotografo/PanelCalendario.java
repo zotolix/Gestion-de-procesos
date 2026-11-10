@@ -74,10 +74,11 @@ public class PanelCalendario extends Pantalla {
                 }
                 libre = false;
                 JButton b = new JButton("<html><b>" + s.horario() + "</b><br>"
-                        + Ui.escapar(s.clienteNombre()) + "<br><font color='#59606C'>" + Ui.escapar(s.paquete()) + "</font></html>");
+                        + Ui.escapar(s.clienteNombre()) + "<br><font color='" + Ui.HEX_TENUE + "'>" + Ui.escapar(s.paquete()) + "</font></html>");
                 b.setHorizontalAlignment(JButton.LEFT);
                 if (seleccionada != null && seleccionada == s.id()) {
-                    b.setBackground(new java.awt.Color(0xE2F0F1));
+                    b.setBackground(Ui.ACENTO);
+                    b.setForeground(Ui.OSCURO);
                     detalle = s;
                 }
                 b.addActionListener(e -> {
