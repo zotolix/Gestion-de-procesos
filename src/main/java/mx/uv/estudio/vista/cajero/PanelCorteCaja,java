@@ -1,0 +1,82 @@
+package mx.uv.estudio.vista.cajero;
+
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.util.Optional;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import mx.uv.estudio.modelo.ReglaException;
+import mx.uv.estudio.modelo.Turno;
+import mx.uv.estudio.modelo.Usuario;
+import mx.uv.estudio.servicio.CajaService;
+import mx.uv.estudio.util.Ui;
+import mx.uv.estudio.vista.MainFrame;
+import mx.uv.estudio.vista.Pantalla;
+
+/** HU22 · Corte de caja al final del turno para conciliar ingresos. */
+public class PanelCorteCaja extends Pantalla {
+
+    private final CajaService cajaService = new CajaService();
+
+    public PanelCorteCaja(Usuario usuario, MainFrame main) {
+        super(usuario, main);
+    }
+
+    @Override
+    protected void construir() throws SQLException {
+        add(Ui.titulo("Corte de caja"));
+        add(Ui.tenue("Conciliación de ingresos al final del turno. Muestra el fondo más los cobros en efectivo."), "gapbottom 10");
+
+        // Validamos si hay un turno abierto hoy para hacer el corte
+        Optional<Turno> turnoOpt = cajaService.turnoDeHoy();
+        if (turnoOpt.isEmpty()) {
+            add(Ui.tarjeta("wrap 1", "[grow]", new JLabel("No hay un turno abierto hoy para realizar el corte.")));
+        } else {
+            add(formularioCorte(turnoOpt.get()), "w 420!");
+        }
+    }
+
+    private JPanel formularioCorte(Turno turno) {
+        JPanel p = Ui.tarjeta("wrap 1, fillx", "[grow,fill]");
+        p.add(Ui.subtitulo("Cierre de turno"));
+
+        // Calculamos el efectivo esperado (Fondo + Cobros en efectivo)
+        BigDecimal efectivoEsperado;
+        try {
+            efectivoEsperado = cajaService.calcularEfectivoEsperado(turno);
+        } catch (SQLException e) {
+            efectivoEsperado = BigDecimal.ZERO;
+        }
+
+        p.add(new JLabel("Efectivo esperado (Fondo + Cobros):"));
+        JLabel lblEsperado = Ui.titulo(Ui.dinero(efectivoEsperado));
+        lblEsperado.setForeground(Ui.ACENTO);
+        p.add(lblEsperado);
+
+        p.add(new JLabel("Efectivo contado físicamente en caja:"));
+        JTextField txtEfectivoContado = new JTextField();
+        p.add(txtEfectivoContado);
+
+        JButton btnRealizarCorte = Ui.primario("Realizar corte de caja");
+        btnRealizarCorte.addActionListener(e -> {
+            try {
+                BigDecimal contado = Ui.leerMonto(txtEfectivoContado.getText());
+                
+                // Registramos el corte a través del servicio
+                cajaService.registrarCorte(turno, contado);
+                
+                javax.swing.JOptionPane.showMessageDialog(this, "¡Corte de caja realizado con éxito! Diferencia registrada.");
+                refrescar();
+            } catch (ReglaException ex) {
+                Ui.error(this, ex.getMessage());
+            } catch (SQLException ex) {
+                Ui.error(this, "Error al guardar el corte: " + ex.getMessage());
+            }
+        });
+
+        p.add(btnRealizarCorte, "growx 0, gaptop 6, h 38!");
+        return p;
+    }
+}
