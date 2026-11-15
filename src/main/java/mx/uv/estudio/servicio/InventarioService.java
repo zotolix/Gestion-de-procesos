@@ -41,6 +41,8 @@ public class InventarioService {
         }
         if (serie == null || serie.isBlank()) {
             err.add("Escribe el número de serie.");
+        } else if (!serie.trim().matches("^[a-zA-Z0-9\\-]+$")) {
+            err.add("El número de serie solo debe contener letras, números y guiones.");
         }
         if (serie != null && !serie.isBlank()) {
             for (Equipo e : equipo.todos()) {

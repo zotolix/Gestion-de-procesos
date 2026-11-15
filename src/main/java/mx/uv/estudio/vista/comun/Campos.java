@@ -9,7 +9,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerDateModel;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 import mx.uv.estudio.util.Ui;
 
 /** Campos de fecha y hora y colores de estado que usan varias pantallas. */
@@ -53,5 +58,60 @@ public final class Campos {
             case "Dañado" -> Ui.MAL;
             default -> Ui.AVISO;
         };
+    }
+
+    @FunctionalInterface
+    public interface ValidadorTexto {
+        boolean esValido(String textoActual, String textoPropuesto);
+    }
+
+    /** Aplica un DocumentFilter a un JTextField para restringir en tiempo real los caracteres aceptados. */
+    public static void aplicarFiltro(JTextField tf, ValidadorTexto validador) {
+        if (tf == null || !(tf.getDocument() instanceof AbstractDocument doc)) {
+            return;
+        }
+        doc.setDocumentFilter(new DocumentFilter() {
+            @Override
+            public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+                if (string == null) {
+                    return;
+                }
+                String actual = fb.getDocument().getText(0, fb.getDocument().getLength());
+                String propuesto = new StringBuilder(actual).insert(offset, string).toString();
+                if (validador.esValido(actual, propuesto)) {
+                    super.insertString(fb, offset, string, attr);
+                }
+            }
+
+            @Override
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+                String actual = fb.getDocument().getText(0, fb.getDocument().getLength());
+                String reemplazo = (text == null) ? "" : text;
+                String propuesto = new StringBuilder(actual).replace(offset, offset + length, reemplazo).toString();
+                if (validador.esValido(actual, propuesto)) {
+                    super.replace(fb, offset, length, text, attrs);
+                }
+            }
+        });
+    }
+
+    /** Permite únicamente letras (incluyendo acentos, ñ y diéresis), espacios, apóstrofes y guiones. */
+    public static void soloLetras(JTextField tf) {
+        aplicarFiltro(tf, (actual, nuevo) -> nuevo.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'\\-]*$"));
+    }
+
+    /** Permite únicamente caracteres telefónicos (dígitos, espacios, +, -, paréntesis). */
+    public static void soloTelefono(JTextField tf) {
+        aplicarFiltro(tf, (actual, nuevo) -> nuevo.matches("^[0-9 ()+\\-]*$"));
+    }
+
+    /** Permite únicamente cantidades monetarias y números decimales positivos (hasta 2 decimales). */
+    public static void soloDecimal(JTextField tf) {
+        aplicarFiltro(tf, (actual, nuevo) -> nuevo.matches("^\\d*(\\.\\d{0,2})?$"));
+    }
+
+    /** Permite únicamente caracteres para número de serie (alfanumérico y guiones). */
+    public static void soloSerie(JTextField tf) {
+        aplicarFiltro(tf, (actual, nuevo) -> nuevo.matches("^[a-zA-Z0-9\\-]*$"));
     }
 }

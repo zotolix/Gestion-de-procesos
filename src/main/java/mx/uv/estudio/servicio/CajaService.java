@@ -29,7 +29,7 @@ public class CajaService {
             throw new ReglaException("Ya hay un turno hoy, abierto por " + t.get().cajero() + ".");
         }
         if (fondo == null || fondo.signum() < 0) {
-            throw new ReglaException("Escribe el monto del fondo (puede ser 0).");
+            throw new ReglaException("Escribe el monto del fondo en números (puede ser 0).");
         }
         turnos.abrir(LocalDate.now(), cajero.id(), fondo, LocalTime.now().truncatedTo(ChronoUnit.MINUTES));
     }
