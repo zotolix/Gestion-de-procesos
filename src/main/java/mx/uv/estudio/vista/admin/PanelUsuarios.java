@@ -15,6 +15,7 @@ import mx.uv.estudio.servicio.UsuarioService;
 import mx.uv.estudio.util.Ui;
 import mx.uv.estudio.vista.MainFrame;
 import mx.uv.estudio.vista.Pantalla;
+import mx.uv.estudio.vista.comun.Campos;
 import net.miginfocom.swing.MigLayout;
 
 /** HU17 · El administrador crea usuarios y asigna o cambia sus roles (una persona puede tener varios). */
@@ -64,6 +65,7 @@ public class PanelUsuarios extends Pantalla {
         JPanel f = Ui.tarjeta("wrap 1, fillx", "[grow,fill]");
         f.add(Ui.subtitulo("Usuario nuevo"));
         JTextField nombre = new JTextField();
+        Campos.soloLetras(nombre);
         JTextField correo = new JTextField();
         JPasswordField clave = new JPasswordField();
         Map<String, JCheckBox> chks = casillas(List.of());

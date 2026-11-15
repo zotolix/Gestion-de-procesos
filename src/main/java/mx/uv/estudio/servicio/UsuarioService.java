@@ -23,8 +23,12 @@ public class UsuarioService {
         List<String> err = new ArrayList<>();
         if (nombre == null || nombre.isBlank()) {
             err.add("Escribe el nombre.");
+        } else if (!nombre.trim().matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'\\-]+$") || !nombre.matches(".*[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ].*")) {
+            err.add("El nombre solo debe contener letras.");
         }
-        if (correo == null || !correo.trim().matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+        if (correo == null || correo.isBlank()) {
+            err.add("Escribe el correo.");
+        } else if (!correo.trim().matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
             err.add("Escribe un correo válido.");
         } else if (usuarios.existeCorreo(correo.trim())) {
             err.add("Ya existe un usuario con el correo " + correo.trim() + ".");

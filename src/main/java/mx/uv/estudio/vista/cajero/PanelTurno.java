@@ -1,5 +1,6 @@
 package mx.uv.estudio.vista.cajero;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Optional;
 import javax.swing.JButton;
@@ -13,6 +14,7 @@ import mx.uv.estudio.servicio.CajaService;
 import mx.uv.estudio.util.Ui;
 import mx.uv.estudio.vista.MainFrame;
 import mx.uv.estudio.vista.Pantalla;
+import mx.uv.estudio.vista.comun.Campos;
 
 /** HU12 · El cajero registra el fondo de caja al iniciar su turno. Hay un turno al día y un solo cajero a la vez. */
 public class PanelTurno extends Pantalla {
@@ -40,11 +42,17 @@ public class PanelTurno extends Pantalla {
         p.add(Ui.subtitulo("Abrir turno de hoy"));
         p.add(new JLabel("Fondo de caja (efectivo con el que empiezas)"));
         JTextField monto = new JTextField();
+        Campos.soloDecimal(monto);
         p.add(monto);
         JButton b = Ui.primario("Abrir turno");
         b.addActionListener(e -> {
             try {
-                caja.abrir(Ui.leerMonto(monto.getText()), usuario);
+                String txtFondo = monto.getText().trim();
+                BigDecimal fondo = Ui.leerMonto(txtFondo);
+                if (!txtFondo.isEmpty() && fondo == null) {
+                    throw new ReglaException("El fondo de caja debe ser una cantidad numérica válida.");
+                }
+                caja.abrir(fondo, usuario);
                 refrescar();
             } catch (ReglaException ex) {
                 Ui.error(this, ex.getMessage());

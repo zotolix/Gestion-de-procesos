@@ -27,7 +27,7 @@ public class PaqueteService {
             err.add("Escribe qué incluye el paquete.");
         }
         if (precio == null || precio.signum() <= 0) {
-            err.add("Escribe un precio mayor que cero.");
+            err.add("Escribe un precio numérico mayor que cero.");
         }
         if (duracionMin != null && duracionMin <= 0) {
             err.add("La duración debe ser mayor que cero.");

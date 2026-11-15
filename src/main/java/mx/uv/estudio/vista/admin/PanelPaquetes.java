@@ -1,5 +1,6 @@
 package mx.uv.estudio.vista.admin;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -10,11 +11,13 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import mx.uv.estudio.modelo.Paquete;
+import mx.uv.estudio.modelo.ReglaException;
 import mx.uv.estudio.modelo.Usuario;
 import mx.uv.estudio.servicio.PaqueteService;
 import mx.uv.estudio.util.Ui;
 import mx.uv.estudio.vista.MainFrame;
 import mx.uv.estudio.vista.Pantalla;
+import mx.uv.estudio.vista.comun.Campos;
 import net.miginfocom.swing.MigLayout;
 
 /** HU11 · CRUD de paquetes: el administrador consulta, agrega, cambia y elimina paquetes y precios. */
@@ -46,6 +49,7 @@ public class PanelPaquetes extends Pantalla {
         JTextField nombre = new JTextField(p == null ? "" : p.nombre());
         JTextField incluye = new JTextField(p == null ? "" : p.incluye());
         JTextField precio = new JTextField(p == null ? "" : p.precio().toPlainString());
+        Campos.soloDecimal(precio);
         boolean sinLimite = p != null && p.duracionMin() == null;
         JSpinner duracion = new JSpinner(new SpinnerNumberModel(p == null || sinLimite ? 60 : p.duracionMin(), 15, 720, 15));
         JCheckBox chkSinLimite = new JCheckBox("Sin límite (bloquea el día)", sinLimite);
@@ -63,8 +67,15 @@ public class PanelPaquetes extends Pantalla {
         t.add(chkSinLimite);
         int id = p == null ? 0 : p.id();
         t.add(Accion.boton(this, p == null ? "Agregar paquete" : "Guardar cambios", true,
-                () -> servicio.guardar(id, nombre.getText(), incluye.getText(), Ui.leerMonto(precio.getText()),
-                        chkSinLimite.isSelected() ? null : (Integer) duracion.getValue()),
+                () -> {
+                    String txtPrecio = precio.getText().trim();
+                    BigDecimal montoPrecio = Ui.leerMonto(txtPrecio);
+                    if (!txtPrecio.isEmpty() && montoPrecio == null) {
+                        throw new ReglaException("El precio debe ser un número válido mayor que cero.");
+                    }
+                    servicio.guardar(id, nombre.getText(), incluye.getText(), montoPrecio,
+                            chkSinLimite.isSelected() ? null : (Integer) duracion.getValue());
+                },
                 () -> {
                     Ui.info(this, "Paquete guardado.");
                     refrescar();

@@ -48,11 +48,19 @@ public class AgendaService {
         List<String> err = new ArrayList<>();
         if (s.nombre() == null || s.nombre().isBlank()) {
             err.add("Escribe el nombre del cliente.");
+        } else if (!s.nombre().trim().matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'\\-]+$") || !s.nombre().matches(".*[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ].*")) {
+            err.add("El nombre del cliente solo debe contener letras.");
         }
-        if (s.telefono() == null || !s.telefono().trim().matches("[0-9 ()+-]{8,}")) {
+        if (s.telefono() == null || s.telefono().isBlank()) {
+            err.add("Escribe el teléfono del cliente.");
+        } else if (!s.telefono().trim().matches("^[0-9 ()+\\-]+$")) {
+            err.add("El teléfono solo puede contener números, espacios, guiones o paréntesis.");
+        } else if (!s.telefono().trim().matches("[0-9 ()+-]{8,}")) {
             err.add("Escribe un teléfono de al menos 8 dígitos.");
         }
-        if (s.correo() == null || !s.correo().trim().matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+        if (s.correo() == null || s.correo().isBlank()) {
+            err.add("Escribe el correo del cliente.");
+        } else if (!s.correo().trim().matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
             err.add("Escribe un correo válido.");
         }
         if (s.paquete() == null) {

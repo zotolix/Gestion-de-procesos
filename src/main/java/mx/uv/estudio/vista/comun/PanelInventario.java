@@ -100,6 +100,7 @@ public class PanelInventario extends Pantalla {
         f.add(Ui.subtitulo("Agregar equipo"));
         JTextField nombre = new JTextField();
         JTextField serie = new JTextField();
+        Campos.soloSerie(serie);
         JComboBox<String> categoria = new JComboBox<>(InventarioService.CATEGORIAS);
         f.add(new JLabel("Nombre"));
         f.add(nombre);

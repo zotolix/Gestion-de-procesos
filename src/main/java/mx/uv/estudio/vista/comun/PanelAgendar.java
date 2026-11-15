@@ -59,6 +59,10 @@ public class PanelAgendar extends Pantalla {
 
     public PanelAgendar(Usuario usuario, MainFrame main) {
         super(usuario, main);
+        Campos.soloLetras(txtNombre);
+        Campos.soloTelefono(txtTelefono);
+        Campos.soloDecimal(txtMonto);
+        Campos.soloLetras(txtBuscar);
         lblErrores.setForeground(Ui.MAL);
         cbPaquete.addActionListener(e -> {
             Paquete p = (Paquete) cbPaquete.getSelectedItem();
@@ -259,6 +263,11 @@ public class PanelAgendar extends Pantalla {
     }
 
     private void agendar() {
+        String textoMonto = txtMonto.getText().trim();
+        if (!textoMonto.isEmpty() && Ui.leerMonto(textoMonto) == null) {
+            lblErrores.setText("El monto a pagar debe ser una cantidad numérica válida.");
+            return;
+        }
         var s = new AgendaService.Solicitud(txtNombre.getText(), txtTelefono.getText(), txtCorreo.getText(),
                 Campos.leerFecha(spFecha), Campos.leerHora(spHora),
                 (Usuario) cbFotografo.getSelectedItem(), (Paquete) cbPaquete.getSelectedItem(),
