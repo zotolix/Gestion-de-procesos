@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -15,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
+
 import mx.uv.estudio.dao.NotificacionDao;
 import mx.uv.estudio.modelo.Usuario;
 import mx.uv.estudio.util.Db;
@@ -26,9 +28,9 @@ import mx.uv.estudio.vista.admin.PanelUsuarios;
 import mx.uv.estudio.vista.cajero.PanelCatalogo;
 import mx.uv.estudio.vista.cajero.PanelTurno;
 import mx.uv.estudio.vista.comun.PanelAgendar;
+import mx.uv.estudio.vista.comun.PanelInventario;
 import mx.uv.estudio.vista.editor.PanelAvisosEditor;
 import mx.uv.estudio.vista.editor.PanelProyectosEditor;
-import mx.uv.estudio.vista.comun.PanelInventario;
 import mx.uv.estudio.vista.fotografo.PanelCalendario;
 import mx.uv.estudio.vista.fotografo.PanelSubirFotos;
 import net.miginfocom.swing.MigLayout;
@@ -140,7 +142,7 @@ public class MainFrame extends JFrame {
 
     private JPanel pie() {
         JPanel pie = new JPanel(new MigLayout("insets 6 18, fillx", "[]push[]"));
-        pie.add(Ui.tenue("Proyecto escolar · Sprint 1, 2 y 3 + HU17 a HU20"));
+        pie.add(Ui.tenue("Proyecto Gestion de procesos de Desarrollo Equipo 4"));
         JButton reset = new JButton("Restablecer datos de ejemplo");
         reset.addActionListener(e -> {
             int r = JOptionPane.showConfirmDialog(this, "Se borrarán todos los cambios y se cargarán los datos de ejemplo.",

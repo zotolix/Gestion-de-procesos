@@ -1,11 +1,13 @@
 package mx.uv.estudio.vista;
 
 import java.sql.SQLException;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+
 import mx.uv.estudio.dao.UsuarioDao;
 import mx.uv.estudio.modelo.ReglaException;
 import mx.uv.estudio.modelo.Usuario;
@@ -55,7 +57,7 @@ public class LoginFrame extends JFrame {
         } catch (SQLException e) {
             add(Ui.tenue("No se pudieron cargar las cuentas de ejemplo."));
         }
-        add(Ui.tenue("<html>Las reglas son las que confirmó Gonzalo (Product Owner). Ver README.md.</html>"), "gaptop 10");
+        add(Ui.tenue("<html>Las reglas son las que confirmó Gonzalo. Ver README.md.</html>"), "gaptop 10");
 
         pack();
         setLocationRelativeTo(null);
