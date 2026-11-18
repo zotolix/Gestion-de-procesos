@@ -9,6 +9,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
@@ -36,9 +37,10 @@ import net.miginfocom.swing.MigLayout;
 public class PanelAgendar extends Pantalla {
 
     private static final String[] METODOS = {"Efectivo", "Tarjeta", "Transferencia"};
-    private static final int MAX_RESULTADOS = 6;
+    private static final int MAX_RESULTADOS = 8;
 
     private final AgendaService agenda = new AgendaService();
+    private final mx.uv.estudio.servicio.CajaService cajaService = new mx.uv.estudio.servicio.CajaService();
     private final Disponibilidad disp = new Disponibilidad();
     private final JTextField txtBuscar = new JTextField();
     private final JPanel resultados = new JPanel(new MigLayout("insets 0, wrap 2, fillx, gap 4 10", "[grow,fill,10:10:][]"));
@@ -56,13 +58,14 @@ public class PanelAgendar extends Pantalla {
     private final JPanel resumen = Ui.tarjeta("wrap 2, fillx", "[grow][right]");
     private boolean armado;
     private boolean cargando;   // mientras se recarga el catálogo no se pisa el monto que ya escribieron
+    private Sesion ultimaSesionAutocompletada;
 
     public PanelAgendar(Usuario usuario, MainFrame main) {
         super(usuario, main);
         Campos.soloLetras(txtNombre);
         Campos.soloTelefono(txtTelefono);
         Campos.soloDecimal(txtMonto);
-        Campos.soloLetras(txtBuscar);
+        // txtBuscar no tiene filtro soloLetras para permitir búsqueda en tiempo real por ID (#) y por nombre
         lblErrores.setForeground(Ui.MAL);
         cbPaquete.addActionListener(e -> {
             Paquete p = (Paquete) cbPaquete.getSelectedItem();
@@ -119,7 +122,8 @@ public class PanelAgendar extends Pantalla {
     private JPanel formulario() {
         JPanel f = Ui.tarjeta("wrap 3, fillx, gap 10 6", "[grow,fill,sg,100:220:][grow,fill,sg,100:220:][grow,fill,sg,100:220:]");
         f.add(lblErrores, "span 3");
-        f.add(Ui.subtitulo("Buscar cliente por nombre"), "span 3");
+        f.add(Ui.subtitulo("Buscar cliente por nombre o ID"), "span 3");
+        f.add(Ui.tenue("Filtro en tiempo real por nombre o ID (#). Permite autocompletar datos o finiquitar pagos pendientes."), "span 3");
         f.add(txtBuscar, "span 3");
         f.add(resultados, "span 3");
         f.add(Ui.subtitulo("Cliente"), "span 3, gaptop 10");
@@ -170,7 +174,7 @@ public class PanelAgendar extends Pantalla {
         return f;
     }
 
-    /** Muestra las sesiones cuyo cliente coincide con lo escrito y permite reusar sus datos. */
+    /** Muestra las sesiones cuyo cliente o ID coincide con lo escrito y permite reusar sus datos o finiquitar saldos. */
     private void buscar() {
         resultados.removeAll();
         String q = txtBuscar.getText().trim();
@@ -178,28 +182,85 @@ public class PanelAgendar extends Pantalla {
             try {
                 List<Sesion> r = agenda.buscarPorCliente(q);
                 if (r.isEmpty()) {
-                    resultados.add(Ui.tenue("Ningún cliente coincide con \"" + q + "\"."), "span 2");
+                    resultados.add(Ui.tenue("Ningún cliente o ID coincide con \"" + q + "\"."), "span 2");
                 }
                 for (Sesion s : r.stream().limit(MAX_RESULTADOS).toList()) {
-                    resultados.add(new JLabel("<html><b>" + Ui.escapar(s.clienteNombre()) + "</b> · "
+                    String chipEstado = s.liquidada()
+                            ? "<font color='#4EDF88'>● Finiquitado (Liquidado)</font>"
+                            : "<font color='#F7FF5E'>● Pendiente (Saldo: " + Ui.dinero(s.saldo()) + ")</font>";
+                    resultados.add(new JLabel("<html><b>#" + s.id() + " · " + Ui.escapar(s.clienteNombre()) + "</b> · "
                             + Ui.escapar(s.clienteTelefono()) + " · " + Ui.escapar(s.clienteCorreo())
                             + "<br><font color='" + Ui.HEX_TENUE + "'>" + Ui.fecha(s.fecha()) + " " + Ui.hora(s.hora()) + " · "
-                            + Ui.escapar(s.paquete()) + " · " + Ui.escapar(s.fotografo()) + " · " + s.estadoPago()
-                            + "</font></html>"));
+                            + Ui.escapar(s.paquete()) + " · " + Ui.escapar(s.fotografo()) + "</font> · "
+                            + chipEstado + "</html>"));
+
+                    JPanel acciones = new JPanel(new MigLayout("insets 0, gap 4"));
+                    if (!s.liquidada()) {
+                        JButton cobrar = new JButton("Cobrar saldo (" + Ui.dinero(s.saldo()) + ")");
+                        cobrar.addActionListener(e -> {
+                            int opt = JOptionPane.showConfirmDialog(this,
+                                    "¿Deseas finiquitar el saldo de " + Ui.dinero(s.saldo()) + " para " + s.clienteNombre() + " (Sesión #" + s.id() + ")?",
+                                    "Finiquitar pago", JOptionPane.YES_NO_OPTION);
+                            if (opt == JOptionPane.YES_OPTION) {
+                                try {
+                                    Pago pFin = cajaService.liquidar(s.id(), s.saldo(), (String) cbMetodo.getSelectedItem(), usuario);
+                                    Ui.info(this, "<html><b>Pago finiquitado exitosamente</b><br><br>"
+                                            + "Cliente: " + Ui.escapar(s.clienteNombre()) + "<br>"
+                                            + "Folio recibo: " + pFin.folio() + "<br>"
+                                            + "Monto cobrado: " + Ui.dinero(pFin.monto()) + " (" + pFin.metodo() + ")<br>"
+                                            + "Estado: Liquidado por completo.</html>");
+                                    buscar(); // Actualiza el estado sin borrar al cliente del buscador
+                                } catch (ReglaException ex) {
+                                    Ui.error(this, ex.getMessage());
+                                } catch (SQLException ex) {
+                                    Ui.error(this, "Error al procesar el pago: " + ex.getMessage());
+                                }
+                            }
+                        });
+                        acciones.add(cobrar);
+                    }
                     JButton usar = new JButton("Usar datos");
                     usar.addActionListener(e -> {
+                        ultimaSesionAutocompletada = s;
                         txtNombre.setText(s.clienteNombre());
                         txtTelefono.setText(s.clienteTelefono());
                         txtCorreo.setText(s.clienteCorreo());
+                        if (s.liquidada()) {
+                            Ui.info(this, "Aviso: El cliente " + s.clienteNombre() + " ya tiene la sesión #" + s.id() + " finiquitada.\nSus datos se cargaron para agendar una nueva sesión.");
+                        }
                     });
-                    resultados.add(usar);
+                    acciones.add(usar);
+                    resultados.add(acciones);
                 }
                 if (r.size() > MAX_RESULTADOS) {
-                    resultados.add(Ui.tenue("Hay " + (r.size() - MAX_RESULTADOS) + " más; escribe más del nombre para acotar."), "span 2");
+                    resultados.add(Ui.tenue("Hay " + (r.size() - MAX_RESULTADOS) + " más; escribe más del nombre o ID para acotar."), "span 2");
                 }
             } catch (SQLException e) {
                 resultados.add(Ui.tenue("No se pudo buscar: " + e.getMessage()), "span 2");
             }
+        } else {
+            // Sugerencia y clientes recientes para que nunca quede vacío el buscador
+            try {
+                List<Sesion> recientes = agenda.recientes(3);
+                if (!recientes.isEmpty()) {
+                    resultados.add(Ui.tenue("Clientes recientes (escribe nombre o ID para filtrar en tiempo real):"), "span 2");
+                    for (Sesion s : recientes) {
+                        String chip = s.liquidada() ? "<font color='#4EDF88'>● Finiquitado</font>" : "<font color='#F7FF5E'>● Pendiente: " + Ui.dinero(s.saldo()) + "</font>";
+                        resultados.add(new JLabel("<html><b>#" + s.id() + " · " + Ui.escapar(s.clienteNombre()) + "</b> · " + chip + "</html>"));
+                        JButton usar = new JButton("Usar datos");
+                        usar.addActionListener(e -> {
+                            ultimaSesionAutocompletada = s;
+                            txtNombre.setText(s.clienteNombre());
+                            txtTelefono.setText(s.clienteTelefono());
+                            txtCorreo.setText(s.clienteCorreo());
+                            if (s.liquidada()) {
+                                Ui.info(this, "Aviso: El cliente " + s.clienteNombre() + " ya tiene la sesión #" + s.id() + " finiquitada.\nSus datos se cargaron para agendar una nueva sesión.");
+                            }
+                        });
+                        resultados.add(usar);
+                    }
+                }
+            } catch (SQLException ignored) { }
         }
         resultados.revalidate();
         resultados.repaint();
@@ -268,6 +329,18 @@ public class PanelAgendar extends Pantalla {
             lblErrores.setText("El monto a pagar debe ser una cantidad numérica válida.");
             return;
         }
+
+        // Validación bug: Detecta si el cliente ya tiene su pago finiquitado y bloquea el guardado duplicado
+        if (ultimaSesionAutocompletada != null && ultimaSesionAutocompletada.liquidada()) {
+            LocalDate f = Campos.leerFecha(spFecha);
+            LocalTime h = Campos.leerHora(spHora);
+            if (f.equals(ultimaSesionAutocompletada.fecha()) && h.equals(ultimaSesionAutocompletada.hora())) {
+                Ui.error(this, "El cliente " + ultimaSesionAutocompletada.clienteNombre() + " (Sesión #" + ultimaSesionAutocompletada.id()
+                        + ") ya tiene su pago finiquitado. No se permite guardar un pago duplicado.");
+                return;
+            }
+        }
+
         var s = new AgendaService.Solicitud(txtNombre.getText(), txtTelefono.getText(), txtCorreo.getText(),
                 Campos.leerFecha(spFecha), Campos.leerHora(spHora),
                 (Usuario) cbFotografo.getSelectedItem(), (Paquete) cbPaquete.getSelectedItem(),
@@ -281,7 +354,8 @@ public class PanelAgendar extends Pantalla {
                     + Ui.fecha(ses.fecha()) + " · " + ses.horario() + " · " + Ui.escapar(ses.fotografo()) + "<br><br>"
                     + pago.concepto() + ": " + Ui.dinero(pago.monto()) + " (" + pago.metodo() + ")<br>"
                     + (ses.liquidada() ? "Pagado por completo." : "Saldo pendiente: " + Ui.dinero(ses.saldo())) + "</html>");
-            limpiar();
+            // Limpia el formulario sin borrar la búsqueda ni los registros maestros del buscador
+            limpiarFormulario();
         } catch (ReglaException e) {
             lblErrores.setText(Ui.lineas(e.mensajes()));
         } catch (SQLException e) {
@@ -290,12 +364,13 @@ public class PanelAgendar extends Pantalla {
         revalidate();
     }
 
-    private void limpiar() {
-        txtBuscar.setText("");
+    /** Limpia los campos del formulario pero mantiene la búsqueda activa y actualiza los estados. */
+    private void limpiarFormulario() {
         txtNombre.setText("");
         txtTelefono.setText("");
         txtCorreo.setText("");
         cbMetodo.setSelectedIndex(0);
+        ultimaSesionAutocompletada = null;
         try {
             cargarPaquetes();
         } catch (SQLException e) {
@@ -305,5 +380,11 @@ public class PanelAgendar extends Pantalla {
         txtMonto.setText(p == null ? "" : AgendaService.anticipoMinimo(p.precio()).toPlainString());
         cbFotografo.setSelectedItem(null);
         recalcular();
+        buscar(); // Actualiza el buscador manteniendo el registro maestro
+    }
+
+    private void limpiar() {
+        txtBuscar.setText("");
+        limpiarFormulario();
     }
 }

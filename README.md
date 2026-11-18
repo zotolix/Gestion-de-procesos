@@ -41,7 +41,7 @@ Se pueden abrir varias ventanas, una por cuenta.
 
 | Rol | Pantallas |
 | --- | --- |
-| Cajero | Catálogo de paquetes · Agendar y anticipo (con buscador por nombre) · Fondo de caja |
+| Cajero | Catálogo de paquetes · Agendar y anticipo (con buscador en tiempo real por nombre o ID) · **Historial de pagos (pendientes y finiquitados)** · Fondo de caja |
 | Fotógrafo | **Subir fotos (HU03)** · Mi calendario (ve sus sesiones, escribe anotaciones, asigna equipo) · Inventario (reporta daños) |
 | Administrador | Avisos · **Revisión de proyectos (HU20)** · **Usuarios y roles (HU17)** · Paquetes y precios (HU18, CRUD) · Inventario (HU19: agrega equipo y atiende el dañado o en mantenimiento) |
 | Editor | **Proyectos (HU07, HU09)** · Avisos (HU06: fotos nuevas; también ve si el administrador aprobó o regresó un proyecto) |
@@ -51,7 +51,8 @@ Se pueden abrir varias ventanas, una por cuenta.
 | Tema | Regla |
 | --- | --- |
 | Agendar | **Solo lo hace el cajero.** El fotógrafo no agenda ni reprograma. Solo aparecen los fotógrafos libres en ese horario. |
-| Buscador | En *Agendar*, escribe el nombre del cliente (sin importar mayúsculas ni acentos) y salen sus sesiones; *Usar datos* llena nombre, teléfono y correo. |
+| Buscador | En *Agendar* y en *Historial de pagos*, escribe el nombre del cliente o su ID (#) para filtrado en tiempo real; *Usar datos* llena los campos y nunca borra el registro maestro del cliente. |
+| Pagos y liquidación | El cajero consulta pagos pendientes y finiquitados en *Historial de pagos*. Al finiquitar un saldo se conserva el registro maestro; si ya está finiquitado, el sistema bloquea cobros duplicados. |
 | Pago al agendar | **Mínimo el 50 %** del paquete; se puede pagar más o el total (botones *Mínimo 50 %* y *Pagar el total*). Si paga el total, la sesión queda **Liquidada**. Efectivo, tarjeta o transferencia. |
 | Paquetes | Básico $800 (1 h), Estándar $1,800 (2 h, álbum incluido), Premium $3,500 (sin límite: bloquea el día del fotógrafo). Precios con IVA incluido. |
 | CRUD de paquetes | El administrador agrega, edita y elimina. Un paquete con sesiones ya agendadas no se borra: se retira del catálogo y esas sesiones lo conservan. |
