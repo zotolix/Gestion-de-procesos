@@ -6,9 +6,12 @@ import java.time.LocalTime;
 import java.util.List;
 import javax.swing.JTextField;
 import mx.uv.estudio.modelo.Paquete;
+import mx.uv.estudio.modelo.Pago;
 import mx.uv.estudio.modelo.ReglaException;
+import mx.uv.estudio.modelo.Sesion;
 import mx.uv.estudio.modelo.Usuario;
 import mx.uv.estudio.servicio.AgendaService;
+import mx.uv.estudio.servicio.CajaService;
 import mx.uv.estudio.servicio.InventarioService;
 import mx.uv.estudio.servicio.UsuarioService;
 import mx.uv.estudio.util.Db;
@@ -28,6 +31,9 @@ public class PruebaValidaciones {
         probarValidacionUsuarioService();
         probarValidacionAgendaService();
         probarValidacionInventarioService();
+        probarBuscadorPorNombreEId();
+        probarHistorialPagosPendientesYFiniquitados();
+        probarBloqueoGuardadoDuplicadoFiniquitado();
         System.out.println("=== TODAS LAS PRUEBAS PASARON EXITOSAMENTE ===");
     }
 
@@ -169,6 +175,86 @@ public class PruebaValidaciones {
             throw new AssertionError("Debió fallar con serie inválida");
         } catch (ReglaException e) {
             afirmar(e.mensajes().contains("El número de serie solo debe contener letras, números y guiones."), "Rechaza serie con caracteres inválidos");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void probarBuscadorPorNombreEId() {
+        System.out.println("\n8. Probando HU (Buscador) - Búsqueda por Nombre y por ID en tiempo real:");
+        AgendaService as = new AgendaService();
+        try {
+            // Búsqueda por nombre
+            List<Sesion> porNombre = as.buscarPorCliente("Laura");
+            afirmar(!porNombre.isEmpty() && porNombre.stream().anyMatch(s -> s.clienteNombre().contains("Laura")),
+                    "Encuentra cliente por nombre ('Laura')");
+
+            // Búsqueda por ID directo
+            List<Sesion> porId = as.buscarPorCliente("2");
+            afirmar(!porId.isEmpty() && porId.stream().anyMatch(s -> s.id() == 2),
+                    "Encuentra sesión por ID numérico ('2')");
+
+            // Búsqueda por ID con formato folio (#2)
+            List<Sesion> porFolio = as.buscarPorCliente("#2");
+            afirmar(!porFolio.isEmpty() && porFolio.stream().anyMatch(s -> s.id() == 2),
+                    "Encuentra sesión por formato '#2'");
+
+            // Búsqueda insensible a mayúsculas y acentos
+            List<Sesion> porAcento = as.buscarPorCliente("mendez");
+            afirmar(!porAcento.isEmpty() && porAcento.stream().anyMatch(s -> s.clienteNombre().contains("Méndez")),
+                    "Encuentra cliente ignorando acentos y mayúsculas ('mendez' -> 'Méndez')");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void probarHistorialPagosPendientesYFiniquitados() {
+        System.out.println("\n9. Probando HU (Historial) - Filtrado de 'Pagos Pendientes' y 'Pagos Finiquitados':");
+        CajaService cs = new CajaService();
+        try {
+            List<Sesion> todas = cs.obtenerSesiones("TODOS", "");
+            afirmar(!todas.isEmpty(), "Obtiene el registro maestro completo de clientes y sesiones");
+
+            List<Sesion> pendientes = cs.obtenerSesiones("PENDIENTES", "");
+            afirmar(!pendientes.isEmpty() && pendientes.stream().allMatch(s -> !s.liquidada()),
+                    "Filtro 'Pagos Pendientes' solo incluye sesiones con saldo mayor a 0");
+
+            List<Sesion> finiquitados = cs.obtenerSesiones("FINIQUITADOS", "");
+            afirmar(!finiquitados.isEmpty() && finiquitados.stream().allMatch(Sesion::liquidada),
+                    "Filtro 'Pagos Finiquitados' solo incluye sesiones completamente liquidadas");
+
+            // Búsqueda combinada con filtro en tiempo real por ID
+            List<Sesion> busquedaId = cs.obtenerSesiones("TODOS", "#1");
+            afirmar(!busquedaId.isEmpty() && busquedaId.get(0).id() == 1,
+                    "Filtrado en tiempo real en historial por ID (#1)");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void probarBloqueoGuardadoDuplicadoFiniquitado() {
+        System.out.println("\n10. Probando Bug (Validación) - Bloqueo de cobro duplicado a cliente finiquitado:");
+        CajaService cs = new CajaService();
+        Usuario cajero = new Usuario(1, "Ana", "ana@estudio.mx", List.of("cajero"));
+
+        try {
+            // Sesion 6 o 7 ya están finiquitadas en los datos de prueba
+            List<Sesion> finiquitados = cs.obtenerSesiones("FINIQUITADOS", "");
+            afirmar(!finiquitados.isEmpty(), "Existen sesiones finiquitadas para la prueba");
+            Sesion sesFiniquitada = finiquitados.get(0);
+
+            try {
+                cs.liquidar(sesFiniquitada.id(), new BigDecimal("100"), "Efectivo", cajero);
+                throw new AssertionError("Debió bloquear el intento de volver a guardar como finiquitado");
+            } catch (ReglaException e) {
+                afirmar(e.mensajes().stream().anyMatch(m -> m.contains("ya tiene su pago finiquitado")),
+                        "Detecta cliente finiquitado y bloquea el guardado duplicado con alerta");
+            }
+
+            // Confirmar que el cliente maestro sigue existiendo en el historial tras el intento
+            List<Sesion> postIntento = cs.obtenerSesiones("TODOS", String.valueOf(sesFiniquitada.id()));
+            afirmar(!postIntento.isEmpty() && postIntento.get(0).liquidada(),
+                    "Nunca elimina el registro maestro del cliente del buscador (conserva su estado finiquitado)");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -86,6 +86,18 @@ public class AgendaService {
         if (err.isEmpty()) {
             disp.choqueFotografo(s.fotografo().id(), s.fecha(), s.hora(), s.paquete().duracionMin(), 0).ifPresent(o ->
                     err.add(s.fotografo().nombre() + " ya tiene la sesión de " + o.clienteNombre() + " (" + o.horario() + ")."));
+            for (Sesion existente : sesiones.todas()) {
+                if (normalizar(existente.clienteNombre()).equalsIgnoreCase(normalizar(s.nombre()))
+                        && existente.fecha().equals(s.fecha())
+                        && existente.hora().equals(s.hora())
+                        && !existente.cancelada()) {
+                    if (existente.liquidada()) {
+                        err.add("El cliente " + existente.clienteNombre() + " ya tiene una sesión finiquitada (#" + existente.id() + ") en esa fecha y hora. No se permite duplicar el registro.");
+                    } else {
+                        err.add("El cliente " + existente.clienteNombre() + " ya tiene una sesión agendada en esa fecha y hora (#" + existente.id() + ").");
+                    }
+                }
+            }
         }
         if (!err.isEmpty()) {
             throw new ReglaException(err);
@@ -112,16 +124,41 @@ public class AgendaService {
         sesiones.guardarAnotaciones(sesionId, texto == null ? "" : texto.trim());
     }
 
-    /** Sesiones cuyo cliente coincide con el texto (sin importar mayúsculas ni acentos), de la más reciente a la más antigua. */
+    /** Devuelve las sesiones más recientes registradas. */
+    public List<Sesion> recientes(int limite) throws SQLException {
+        return sesiones.todas().stream().limit(limite).toList();
+    }
+
+    /** Sesiones cuyo cliente o ID coincide con el texto (sin importar mayúsculas ni acentos), de la más reciente a la más antigua. */
     public List<Sesion> buscarPorCliente(String texto) throws SQLException {
-        String q = normalizar(texto);
+        if (texto == null) {
+            return new ArrayList<>();
+        }
+        String crudo = texto.trim();
+        String q = normalizar(crudo);
         List<Sesion> r = new ArrayList<>();
         if (q.isEmpty()) {
             return r;
         }
+        String idNumerico = crudo.replaceAll("[^0-9]", "");
+        boolean esBusquedaId = crudo.startsWith("#") || (crudo.matches("^\\d+$") && crudo.length() <= 5);
+
         for (Sesion s : sesiones.todas()) {
-            if (normalizar(s.clienteNombre()).contains(q)) {
-                r.add(s);
+            boolean coincideId = (!idNumerico.isEmpty() && String.valueOf(s.id()).equals(idNumerico))
+                    || String.valueOf(s.id()).equalsIgnoreCase(q)
+                    || ("#" + s.id()).equalsIgnoreCase(q);
+            if (esBusquedaId) {
+                if (coincideId) {
+                    r.add(s);
+                }
+            } else {
+                boolean coincideNombre = normalizar(s.clienteNombre()).contains(q);
+                boolean coincideTelefono = s.clienteTelefono() != null
+                        && idNumerico.length() >= 4
+                        && s.clienteTelefono().replaceAll("[^0-9]", "").contains(idNumerico);
+                if (coincideNombre || coincideId || coincideTelefono) {
+                    r.add(s);
+                }
             }
         }
         return r;

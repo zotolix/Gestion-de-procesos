@@ -18,6 +18,12 @@ public class PagoDao {
                 sesionId, concepto, monto, metodo, fecha);
     }
 
+    public int insertar(int sesionId, String concepto, BigDecimal monto, String metodo, LocalDate fecha) throws SQLException {
+        try (Connection c = Db.con()) {
+            return insertar(c, sesionId, concepto, monto, metodo, fecha);
+        }
+    }
+
     public List<Pago> deSesion(int sesionId) throws SQLException {
         return lista("SELECT id, sesion_id, concepto, monto, metodo, fecha FROM pago WHERE sesion_id = ? ORDER BY id", sesionId);
     }

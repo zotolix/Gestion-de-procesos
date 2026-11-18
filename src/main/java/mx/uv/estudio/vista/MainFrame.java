@@ -26,6 +26,7 @@ import mx.uv.estudio.vista.admin.PanelPaquetes;
 import mx.uv.estudio.vista.admin.PanelRevision;
 import mx.uv.estudio.vista.admin.PanelUsuarios;
 import mx.uv.estudio.vista.cajero.PanelCatalogo;
+import mx.uv.estudio.vista.cajero.PanelHistorialPagos;
 import mx.uv.estudio.vista.cajero.PanelTurno;
 import mx.uv.estudio.vista.comun.PanelAgendar;
 import mx.uv.estudio.vista.comun.PanelInventario;
@@ -70,6 +71,7 @@ public class MainFrame extends JFrame {
             seccion("Cajero");
             agregar("catalogo", "Catálogo de paquetes", new PanelCatalogo(usuario, this));
             agregar("agendar", "Agendar y anticipo", new PanelAgendar(usuario, this));
+            agregar("historial", "Historial de pagos", new PanelHistorialPagos(usuario, this));
             agregar("turno", "Fondo de caja", new PanelTurno(usuario, this));
         }
         if (usuario.tiene("fotografo")) {
