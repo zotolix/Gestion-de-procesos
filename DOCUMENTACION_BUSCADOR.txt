@@ -1,0 +1,116 @@
+# Documentación Técnica: Ajustes y Mejoras al Buscador de Clientes
+
+**Proyecto:** Sistema del Estudio Fotográfico  
+**Módulo:** Caja / Agendar  
+**Fecha:** Noviembre 2026  
+**Rama:** `cambios-graficos`  
+
+---
+
+## 1. Contexto e Historia de Usuario
+
+### Historia de Usuario
+> **Como cajero**, quiero un buscador de clientes más intuitivo con filtrado en tiempo real (por nombre o ID) para agilizar el cobro y no perder el registro maestro del cliente tras realizar una transacción.
+
+### Objetivos Principales
+1. Permitir búsquedas instantáneas tanto por **nombre del cliente** (insensible a mayúsculas y acentos) como por **ID de sesión** (número directo `2` o formato con numeral `#2`).
+2. Permitir el cobro y liquidación inmediata de saldos pendientes desde los propios resultados de búsqueda.
+3. Asegurar que al finalizar una operación de cobro o agendado, el cliente **nunca se elimine del buscador**; en su lugar, debe conservarse en pantalla y actualizar su estado a *Finiquitado* en tiempo real.
+4. Advertir y bloquear operaciones duplicadas sobre sesiones que ya se encuentren liquidadas.
+
+---
+
+## 2. Diagnóstico del Estado Anterior (Problemas Detectados)
+
+| Problema Previo | Causa en el Código | Impacto |
+| :--- | :--- | :--- |
+| **Imposibilidad de escribir IDs o números** | Se aplicaba `Campos.soloLetras(txtBuscar)` en `PanelAgendar`. | El cajero no podía buscar clientes por su número de sesión / ID (`#1`, `#2`, etc.). |
+| **Búsqueda restringida únicamente a texto** | `AgendaService.buscarPorCliente` solo comparaba contra `s.clienteNombre()`. | Escribir un número no arrojaba ninguna coincidencia. |
+| **Desaparición del cliente tras cobrar** | El método `limpiar()` ejecutaba `txtBuscar.setText("")`. | Al vaciar el texto, se limpiaba el contenedor de resultados, dando la impresión de que el registro maestro del cliente se había borrado. |
+| **Falta de visibilidad del estado de pago** | Los resultados no mostraban claramente si el cliente debía saldo o estaba liquidado. | El cajero debía ingresar a la sesión para consultar si requería cobro. |
+
+---
+
+## 3. Cambios Implementados
+
+### A. Capa de Servicios (`AgendaService.java` y `CajaService.java`)
+
+1. **Soporte Alfanumérico y por ID en `AgendaService.buscarPorCliente(String texto)`:**
+   - Se procesa la entrada distinguiendo si el término es un ID numérico (`1`, `2`) o folio (`#1`, `#2`).
+   - Se mantiene la normalización de texto (`Normalizer`) para ignorar acentos, diéresis y mayúsculas (`mendez` encuentra `Laura Méndez`).
+   - Se añadió coincidencia secundaria por teléfono si se ingresan 4 o más dígitos.
+   
+2. **Método `recientes(int limite)`:**
+   - Devuelve las sesiones registradas más recientes para mostrarlas como sugerencia cuando el campo de búsqueda está vacío, evitando que el panel quede en blanco.
+
+3. **Filtrado en Tiempo Real en `CajaService.obtenerSesiones(String filtroEstado, String busqueda)`:**
+   - Misma lógica de búsqueda compartida para filtrar en tiempo real tanto en la pantalla de *Agendar y anticipo* como en la nueva sección de *Historial de pagos*.
+
+---
+
+### B. Capa de Vista (`PanelAgendar.java`)
+
+1. **Remoción de la restricción `soloLetras`:**
+   - Se eliminó `Campos.soloLetras(txtBuscar)`, habilitando la entrada libre de dígitos y caracteres como `#`.
+
+2. **Visualización Mejorada de Resultados:**
+   - Cada resultado ahora resalta:
+     - ID de sesión y nombre: `<b>#2 · Laura Méndez</b>`
+     - Teléfono y correo de contacto.
+     - Fecha, hora, paquete contratado y fotógrafo asignado.
+     - Indicador visual de estado:
+       - `● Finiquitado (Liquidado)` (en verde `#4EDF88`).
+       - `● Pendiente (Saldo: $X.XX)` (en amarillo/acento `#F7FF5E`).
+
+3. **Acción de Cobro Rápido:**
+   - Para clientes con saldo pendiente, se incluye el botón **`Cobrar saldo ($X.XX)`** directamente en el buscador.
+   - Permite al cajero liquidar el adeudo en una ventana de confirmación rápida sin tener que rellenar todo el formulario.
+
+4. **Persistencia del Registro Maestro (`limpiarFormulario`):**
+   - Se separó la limpieza de los campos de texto (`txtNombre`, `txtTelefono`, etc.) de la caja de búsqueda (`txtBuscar`).
+   - Tras completar un cobro o agendar, se ejecuta `limpiarFormulario()`, el cual **preserva el término buscado y vuelve a ejecutar `buscar()`**, actualizando de inmediato el estado del cliente a *Finiquitado* sin sacarlo de pantalla.
+
+5. **Validación contra Duplicados:**
+   - Al autocompletar datos de una sesión ya finiquitada mediante `Usar datos`, se informa al cajero con una alerta que sus datos se cargaron para una *nueva* sesión.
+   - Si se intenta guardar un pago duplicado para la misma fecha y hora, el sistema bloquea la acción y emite una alerta.
+
+---
+
+### C. Pruebas Automatizadas (`PruebaValidaciones.java`)
+
+Se incorporó la suite de pruebas `probarBuscadorPorNombreEId()` que valida automáticamente:
+- Búsqueda por nombre de cliente (`"Laura"`).
+- Búsqueda por ID numérico (`"2"`).
+- Búsqueda por formato folio con numeral (`"#2"`).
+- Búsqueda insensible a mayúsculas y acentos (`"mendez"` -> `"Méndez"`).
+- Persistencia del cliente en el registro tras intentos de cobro duplicado.
+
+---
+
+## 4. Guía de Uso y Verificación
+
+### Para probar la búsqueda en la aplicación:
+
+1. **Iniciar la aplicación:**
+   ```bash
+   java -jar target/sistema-estudio-1.0.jar
+   ```
+2. **Iniciar sesión como Cajero:**
+   - Correo: `ana@estudio.mx`
+   - Contraseña: `1234`
+3. **Ir a la pantalla "Agendar y anticipo":**
+   - **Búsqueda por ID:** Escribe `#2` o `2` en el buscador. Aparecerá la sesión de *Laura Méndez*.
+   - **Búsqueda por Nombre:** Escribe `mendez` o `laura`. El resultado filtrará en tiempo real.
+   - **Cobro de Saldo:** Haz clic en `Cobrar saldo ($900.00)`. Confirma la transacción.
+   - **Comprobación:** Nota cómo el cliente **sigue presente en la lista** y su estado cambia de inmediato a `● Finiquitado (Liquidado)`.
+
+---
+
+## 5. Archivos Modificados
+
+- `src/main/java/mx/uv/estudio/servicio/AgendaService.java`
+- `src/main/java/mx/uv/estudio/servicio/CajaService.java`
+- `src/main/java/mx/uv/estudio/vista/comun/PanelAgendar.java`
+- `src/main/java/mx/uv/estudio/vista/cajero/PanelHistorialPagos.java`
+- `src/test/java/mx/uv/estudio/PruebaValidaciones.java`
+- `README.md`
