@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import mx.uv.estudio.modelo.ReglaException;
@@ -29,28 +30,23 @@ public class PanelCorteCaja extends Pantalla {
         add(Ui.titulo("Corte de caja"));
         add(Ui.tenue("Conciliación de ingresos al final del turno. Muestra el fondo más los cobros en efectivo."), "gapbottom 10");
 
-        // Validamos si hay un turno abierto hoy para hacer el corte
         Optional<Turno> turnoOpt = cajaService.turnoDeHoy();
         if (turnoOpt.isEmpty()) {
-            add(Ui.tarjeta("wrap 1", "[grow]", new JLabel("No hay un turno abierto hoy para realizar el corte.")));
+            JPanel aviso = Ui.tarjeta("wrap 1", "[grow]");
+            aviso.add(new JLabel("No hay un turno abierto hoy para realizar el corte."));
+            add(aviso, "w 420!");
         } else {
             add(formularioCorte(turnoOpt.get()), "w 420!");
         }
     }
 
-    private JPanel formularioCorte(Turno turno) {
+    private JPanel formularioCorte(Turno turno) throws SQLException {
         JPanel p = Ui.tarjeta("wrap 1, fillx", "[grow,fill]");
         p.add(Ui.subtitulo("Cierre de turno"));
 
-        // Calculamos el efectivo esperado (Fondo + Cobros en efectivo)
-        BigDecimal efectivoEsperado;
-        try {
-            efectivoEsperado = cajaService.calcularEfectivoEsperado(turno);
-        } catch (SQLException e) {
-            efectivoEsperado = BigDecimal.ZERO;
-        }
+        final BigDecimal efectivoEsperado = cajaService.calcularEfectivoEsperado(turno);
 
-        p.add(new JLabel("Efectivo esperado (Fondo + Cobros):"));
+        p.add(new JLabel("Efectivo esperado (Fondo + Cobros en efectivo):"));
         JLabel lblEsperado = Ui.titulo(Ui.dinero(efectivoEsperado));
         lblEsperado.setForeground(Ui.ACENTO);
         p.add(lblEsperado);
@@ -63,11 +59,24 @@ public class PanelCorteCaja extends Pantalla {
         btnRealizarCorte.addActionListener(e -> {
             try {
                 BigDecimal contado = Ui.leerMonto(txtEfectivoContado.getText());
-                
-                // Registramos el corte a través del servicio
-                cajaService.registrarCorte(turno, contado);
-                
-                javax.swing.JOptionPane.showMessageDialog(this, "¡Corte de caja realizado con éxito! Diferencia registrada.");
+                BigDecimal diferencia = cajaService.registrarCorte(turno, contado);
+
+                String estadoDiferencia;
+                int cmp = diferencia.compareTo(BigDecimal.ZERO);
+                if (cmp > 0) {
+                    estadoDiferencia = "Sobrante de " + Ui.dinero(diferencia);
+                } else if (cmp < 0) {
+                    estadoDiferencia = "Faltante de " + Ui.dinero(diferencia.abs());
+                } else {
+                    estadoDiferencia = "Sin diferencia (cuadre exacto)";
+                }
+
+                String resumen = "Corte registrado.\n"
+                        + "Efectivo esperado: " + Ui.dinero(efectivoEsperado) + "\n"
+                        + "Efectivo contado: " + Ui.dinero(contado) + "\n"
+                        + "Resultado: " + estadoDiferencia;
+
+                JOptionPane.showMessageDialog(this, resumen);
                 refrescar();
             } catch (ReglaException ex) {
                 Ui.error(this, ex.getMessage());

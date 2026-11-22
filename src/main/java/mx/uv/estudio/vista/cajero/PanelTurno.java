@@ -26,7 +26,7 @@ public class PanelTurno extends Pantalla {
     @Override
     protected void construir() throws SQLException {
         add(Ui.titulo("Fondo de caja"));
-        add(Ui.tenue("Un turno por día y un solo cajero a la vez. Al abrir el turno se registra el fondo."), "gapbottom 10");
+        add(Ui.tenue("Un turno por día y un solo cajero a la vez. Al abrir el turno se registra el fondo (mínimo $1,000.00)."), "gapbottom 10");
         Optional<Turno> t = caja.turnoDeHoy();
         if (t.isEmpty()) {
             add(abrir(), "w 420!");
@@ -38,9 +38,10 @@ public class PanelTurno extends Pantalla {
     private JPanel abrir() {
         JPanel p = Ui.tarjeta("wrap 1, fillx", "[grow,fill]");
         p.add(Ui.subtitulo("Abrir turno de hoy"));
-        p.add(new JLabel("Fondo de caja (efectivo con el que empiezas)"));
+        p.add(new JLabel("Fondo de caja (mínimo $1,000.00 en efectivo)"));
         JTextField monto = new JTextField();
         p.add(monto);
+        p.add(Ui.tenue("Ingresa al menos $1,000.00 para iniciar el turno."));
         JButton b = Ui.primario("Abrir turno");
         b.addActionListener(e -> {
             try {
