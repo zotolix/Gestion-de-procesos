@@ -17,6 +17,10 @@ public class PaqueteService {
         return paquetes.todos();
     }
 
+    public boolean tienePagoPendiente(int paqueteId) throws SQLException {
+        return paquetes.tienePedidoPendienteDePago(paqueteId);
+    }
+
     /** id 0 = paquete nuevo. duracionMin null = sin límite. */
     public void guardar(int id, String nombre, String incluye, BigDecimal precio, Integer duracionMin) throws ReglaException, SQLException {
         List<String> err = new ArrayList<>();
@@ -43,10 +47,16 @@ public class PaqueteService {
     }
 
     /**
-     * Quita el paquete del catálogo. Si ya tiene sesiones agendadas no se borra de verdad
-     * (esas sesiones conservan su paquete): solo deja de aparecer. Devuelve true si se borró del todo.
+     * Quita el paquete del catálogo. Si tiene un pedido/sesión con pago pendiente, lanza ReglaException.
+     * Si ya tiene sesiones agendadas (sin pagos pendientes) no se borra de verdad: solo deja de aparecer.
+     * Devuelve true si se borró del todo.
      */
-    public boolean eliminar(int id) throws SQLException {
+    public boolean eliminar(int id) throws ReglaException, SQLException {
+        if (paquetes.tienePedidoPendienteDePago(id)) {
+            throw new ReglaException(
+                "No se puede eliminar el paquete: quedó un pedido con pago pendiente asociado a este paquete."
+            );
+        }
         if (paquetes.tieneSesiones(id)) {
             paquetes.retirar(id);
             return false;

@@ -47,6 +47,27 @@ public class PaqueteDao {
         }
     }
 
+    public boolean tienePedidoPendienteDePago(int paqueteId) throws SQLException {
+        String sql = "SELECT COUNT(*) "
+                   + "FROM sesion s "
+                   + "JOIN paquete p ON p.id = s.paquete_id "
+                   + "LEFT JOIN ("
+                   + "    SELECT sesion_id, COALESCE(SUM(monto), 0) AS total_pagado "
+                   + "    FROM pago "
+                   + "    GROUP BY sesion_id"
+                   + ") pg ON pg.sesion_id = s.id "
+                   + "WHERE s.paquete_id = ? "
+                   + "AND COALESCE(pg.total_pagado, 0) < p.precio";
+
+        try (Connection c = Db.con(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, paqueteId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1) > 0;
+            }
+        }
+    }
+
     public void borrar(int id) throws SQLException {
         Sql.ejecutar("DELETE FROM paquete WHERE id = ?", id);
     }

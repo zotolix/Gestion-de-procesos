@@ -10,6 +10,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import mx.uv.estudio.modelo.Paquete;
+import mx.uv.estudio.modelo.ReglaException;
 import mx.uv.estudio.modelo.Usuario;
 import mx.uv.estudio.servicio.PaqueteService;
 import mx.uv.estudio.util.Ui;
@@ -30,7 +31,8 @@ public class PanelPaquetes extends Pantalla {
     protected void construir() throws SQLException {
         add(Ui.titulo("Paquetes y precios"));
         add(Ui.tenue("<html>Precios finales con IVA incluido. Las sesiones ya agendadas conservan el precio y la duración con que se agendaron.<br>"
-                + "Un paquete que ya tiene sesiones no se borra: solo deja de aparecer en el catálogo.</html>"),
+                + "Un paquete que ya tiene sesiones no se borra: solo deja de aparecer en el catálogo.<br>"
+                + "Si existe un pedido o sesión con pago pendiente, no se puede eliminar el paquete.</html>"),
                 "gapbottom 10");
         JPanel fila = new JPanel(new MigLayout("insets 0, gap 14, wrap 2", "[grow,fill,sg][grow,fill,sg]"));
         for (Paquete p : servicio.todos()) {
@@ -72,6 +74,15 @@ public class PanelPaquetes extends Pantalla {
         if (p != null) {
             JButton eliminar = new JButton("Eliminar");
             eliminar.setForeground(Ui.MAL);
+            try {
+                boolean tienePendiente = servicio.tienePagoPendiente(p.id());
+                eliminar.setEnabled(!tienePendiente);
+                if (tienePendiente) {
+                    eliminar.setToolTipText("Quedó un pedido con pago pendiente con este paquete.");
+                }
+            } catch (SQLException ex) {
+                Ui.error(this, "Error al verificar pagos pendientes: " + ex.getMessage());
+            }
             eliminar.addActionListener(e -> eliminar(p));
             t.add(eliminar, "gaptop 6");
         }
@@ -89,6 +100,8 @@ public class PanelPaquetes extends Pantalla {
             Ui.info(this, borrado ? "Paquete eliminado."
                     : "El paquete ya tiene sesiones agendadas, así que se retiró del catálogo sin borrar esas sesiones.");
             refrescar();
+        } catch (ReglaException ex) {
+            Ui.error(this, ex.getMessage());
         } catch (SQLException ex) {
             Ui.error(this, "No se pudo eliminar: " + ex.getMessage());
         }
