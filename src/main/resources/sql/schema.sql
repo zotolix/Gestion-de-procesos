@@ -2,7 +2,7 @@
 
 CREATE TABLE usuario (
   id INT IDENTITY(1,1) PRIMARY KEY,
-  nombre VARCHAR(100) NOT NULL,
+  nombre VARCHAR(100) NOT NULL UNIQUE,
   correo VARCHAR(120) NOT NULL UNIQUE,
   hash VARCHAR(100) NOT NULL           -- contraseña con BCrypt
 );

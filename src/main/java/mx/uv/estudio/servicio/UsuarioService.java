@@ -25,13 +25,15 @@ public class UsuarioService {
             err.add("Escribe el nombre.");
         } else if (!nombre.trim().matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'\\-]+$") || !nombre.matches(".*[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ].*")) {
             err.add("El nombre solo debe contener letras.");
+        } else if (usuarios.existeNombre(nombre.trim())) {
+            err.add("El nombre de usuario ya está en uso.");
         }
         if (correo == null || correo.isBlank()) {
             err.add("Escribe el correo.");
         } else if (!correo.trim().matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
             err.add("Escribe un correo válido.");
         } else if (usuarios.existeCorreo(correo.trim())) {
-            err.add("Ya existe un usuario con el correo " + correo.trim() + ".");
+            err.add("El correo electrónico ya está registrado.");
         }
         if (contrasena == null || contrasena.length() < 4) {
             err.add("La contraseña debe tener al menos 4 caracteres.");
@@ -42,7 +44,18 @@ public class UsuarioService {
         if (!err.isEmpty()) {
             throw new ReglaException(err);
         }
-        usuarios.crear(nombre.trim(), correo.trim(), BCrypt.hashpw(contrasena, BCrypt.gensalt(10)), roles);
+        try {
+            usuarios.crear(nombre.trim(), correo.trim(), BCrypt.hashpw(contrasena, BCrypt.gensalt(10)), roles);
+        } catch (SQLException e) {
+            // Evita mostrar errores crudos de SQL (p. ej. violación de unicidad por carrera).
+            if (usuarios.existeCorreo(correo.trim())) {
+                throw new ReglaException("El correo electrónico ya está registrado.");
+            }
+            if (usuarios.existeNombre(nombre.trim())) {
+                throw new ReglaException("El nombre de usuario ya está en uso.");
+            }
+            throw new ReglaException("No se pudo guardar el usuario.");
+        }
     }
 
     public void cambiarRoles(Usuario u, List<String> roles, Usuario quien) throws ReglaException, SQLException {

@@ -43,6 +43,16 @@ public class UsuarioDao {
         return porCorreo(correo).isPresent();
     }
 
+    public boolean existeNombre(String nombre) throws SQLException {
+        try (Connection c = Db.con(); PreparedStatement ps = c.prepareStatement(
+                "SELECT 1 FROM usuario WHERE LOWER(nombre) = LOWER(?)")) {
+            ps.setString(1, nombre);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     public void crear(String nombre, String correo, String hash, List<String> roles) throws SQLException {
         try (Connection c = Db.con()) {
             c.setAutoCommit(false);
