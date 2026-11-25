@@ -11,6 +11,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
@@ -37,13 +38,14 @@ import net.miginfocom.swing.MigLayout;
 public class PanelAgendar extends Pantalla {
 
     private static final String[] METODOS = {"Efectivo", "Tarjeta", "Transferencia"};
-    private static final int MAX_RESULTADOS = 8;
+    private static final int MAX_RESULTADOS = 15;
 
     private final AgendaService agenda = new AgendaService();
     private final mx.uv.estudio.servicio.CajaService cajaService = new mx.uv.estudio.servicio.CajaService();
     private final Disponibilidad disp = new Disponibilidad();
     private final JTextField txtBuscar = new JTextField();
     private final JPanel resultados = new JPanel(new MigLayout("insets 0, wrap 2, fillx, gap 4 10", "[grow,fill,10:10:][]"));
+    private final JScrollPane spResultados = new JScrollPane(resultados);
     private final JTextField txtNombre = new JTextField();
     private final JTextField txtTelefono = new JTextField();
     private final JTextField txtCorreo = new JTextField();
@@ -67,6 +69,9 @@ public class PanelAgendar extends Pantalla {
         Campos.soloDecimal(txtMonto);
         // txtBuscar no tiene filtro soloLetras para permitir búsqueda en tiempo real por ID (#) y por nombre
         lblErrores.setForeground(Ui.MAL);
+        spResultados.setBorder(null);
+        spResultados.setPreferredSize(new java.awt.Dimension(0, 180));
+        spResultados.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         cbPaquete.addActionListener(e -> {
             Paquete p = (Paquete) cbPaquete.getSelectedItem();
             if (p != null && !cargando) {
@@ -125,7 +130,7 @@ public class PanelAgendar extends Pantalla {
         f.add(Ui.subtitulo("Buscar cliente por nombre o ID"), "span 3");
         f.add(Ui.tenue("Filtro en tiempo real por nombre o ID (#). Permite autocompletar datos o finiquitar pagos pendientes."), "span 3");
         f.add(txtBuscar, "span 3");
-        f.add(resultados, "span 3");
+        f.add(spResultados, "span 3, h 180!");
         f.add(Ui.subtitulo("Cliente"), "span 3, gaptop 10");
         f.add(new JLabel("Nombre"));
         f.add(new JLabel("Teléfono"));
@@ -241,7 +246,7 @@ public class PanelAgendar extends Pantalla {
         } else {
             // Sugerencia y clientes recientes para que nunca quede vacío el buscador
             try {
-                List<Sesion> recientes = agenda.recientes(3);
+                List<Sesion> recientes = agenda.recientes(MAX_RESULTADOS);
                 if (!recientes.isEmpty()) {
                     resultados.add(Ui.tenue("Clientes recientes (escribe nombre o ID para filtrar en tiempo real):"), "span 2");
                     for (Sesion s : recientes) {
@@ -264,6 +269,8 @@ public class PanelAgendar extends Pantalla {
         }
         resultados.revalidate();
         resultados.repaint();
+        spResultados.revalidate();
+        spResultados.repaint();
     }
 
     /** Vuelve a calcular los fotógrafos libres cuando cambia el paquete, la fecha o la hora. */
