@@ -153,14 +153,9 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel pie() {
-<<<<<<< HEAD
-        JPanel pie = new JPanel(new MigLayout("insets 6 18, fillx", "[]push[]"));
-        pie.add(Ui.tenue("Proyecto Gestion de procesos de Desarrollo Equipo 4"));
-=======
         JPanel pie = new JPanel(new MigLayout("insets 8 20, fillx", "[]push[]"));
         pie.setBackground(Ui.SUPERFICIE);
-        pie.add(Ui.tenue("Proyecto escolar · Sprint 1, 2 y 3 + HU17 a HU20"));
->>>>>>> 997a6bd (Implementar cambios graficos: tema oscuro 1A1A1A, detalles en amarillo F7FF5E, tipografia Inter escalada 25% y bordes suavizados)
+        pie.add(Ui.tenue("Proyecto Gestion de procesos de Desarrollo Equipo 4"));
         JButton reset = new JButton("Restablecer datos de ejemplo");
         reset.addActionListener(e -> {
             int r = JOptionPane.showConfirmDialog(this, "Se borrarán todos los cambios y se cargarán los datos de ejemplo.",
