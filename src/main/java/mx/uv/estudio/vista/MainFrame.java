@@ -20,6 +20,7 @@ import javax.swing.JToggleButton;
 import mx.uv.estudio.dao.NotificacionDao;
 import mx.uv.estudio.modelo.Usuario;
 import mx.uv.estudio.util.Db;
+import mx.uv.estudio.util.IconManager;
 import mx.uv.estudio.util.Ui;
 import mx.uv.estudio.vista.admin.PanelAvisos;
 import mx.uv.estudio.vista.admin.PanelPaquetes;
@@ -60,6 +61,10 @@ public class MainFrame extends JFrame {
         this.usuario = usuario;
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(1280, 800);
+        javax.swing.ImageIcon appIcon = IconManager.cargar("logo_estudio_64.png");
+        if (appIcon != null) {
+            setIconImage(appIcon.getImage());
+        }
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         getContentPane().setBackground(Ui.FONDO);
@@ -119,6 +124,11 @@ public class MainFrame extends JFrame {
         sp.getVerticalScrollBar().setUnitIncrement(16);
         centro.add(sp, clave);
         JToggleButton b = new JToggleButton(titulo);
+        javax.swing.ImageIcon icNav = IconManager.cargar(iconoDe(clave), 18, 18);
+        if (icNav != null) {
+            b.setIcon(icNav);
+            b.setIconTextGap(10);
+        }
         b.setHorizontalAlignment(JToggleButton.LEFT);
         b.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         b.addActionListener(e -> mostrar(clave));
@@ -130,7 +140,9 @@ public class MainFrame extends JFrame {
     private JPanel barraSuperior() {
         JPanel barra = new JPanel(new MigLayout("insets 12 20, fillx", "[]push[]16[]"));
         barra.setBackground(Ui.SUPERFICIE);
-        JLabel marca = new JLabel("Sistema del estudio");
+        javax.swing.ImageIcon logoHeader = IconManager.cargar("logo_estudio_32.png", 28, 28);
+        JLabel marca = new JLabel("Sistema del estudio", logoHeader, javax.swing.SwingConstants.LEFT);
+        marca.setIconTextGap(10);
         marca.setFont(marca.getFont().deriveFont(Font.BOLD, 19f));
         marca.setForeground(Ui.ACENTO);
         barra.add(marca);
@@ -138,6 +150,11 @@ public class MainFrame extends JFrame {
         userLbl.setForeground(Ui.BLANCO);
         barra.add(userLbl);
         JButton salir = new JButton("Cerrar sesión");
+        javax.swing.ImageIcon icSalir = IconManager.cargar("ic_salida.png", 16, 16);
+        if (icSalir != null) {
+            salir.setIcon(icSalir);
+            salir.setIconTextGap(8);
+        }
         salir.addActionListener(e -> {
             dispose();
             new LoginFrame().setVisible(true);
@@ -190,5 +207,24 @@ public class MainFrame extends JFrame {
                 b.setText(titulos.get(e.getKey()));
             }
         }
+    }
+
+    /** Devuelve el nombre del icono PNG asociado a una pantalla del menú. */
+    private String iconoDe(String clave) {
+        return switch (clave) {
+            case "catalogo" -> "ic_catalogo.png";
+            case "agendar" -> "ic_agendar.png";
+            case "historial" -> "ic_historial.png";
+            case "turno" -> "ic_turno.png";
+            case "calendario" -> "ic_calendario.png";
+            case "fotos" -> "ic_fotos.png";
+            case "inventario" -> "ic_inventario.png";
+            case "proyectos" -> "ic_proyectos.png";
+            case "editor", "avisos" -> "ic_avisos.png";
+            case "revision" -> "ic_revision.png";
+            case "usuarios" -> "ic_usuarios.png";
+            case "paquetes" -> "ic_paquetes.png";
+            default -> null;
+        };
     }
 }
